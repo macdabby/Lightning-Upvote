@@ -6,11 +6,10 @@ use Exception;
 use Lightning\Tools\ClientUser;
 use Lightning\Tools\Database;
 use Lightning\Tools\Form;
-use Lightning\Tools\PHP;
 use Lightning\View\API;
 use Modules\Upvote\Model\Channel;
 use Modules\Upvote\Model\Message;
-use Overridable\Lightning\Tools\Request;
+use Lightning\Tools\Request;
 
 class Upvote extends API {
 
@@ -23,10 +22,14 @@ class Upvote extends API {
 
         $loaded = Request::get('ignore', Request::TYPE_ARRAY, Request::TYPE_INT);
 
+        $locator = Request::get('locator', Request::TYPE_STRING);
+        $channel = Channel::loadByLocator($locator);
+
         $replies = Database::getInstance()->selectAllQuery([
             'select' => ['message_id', 'user_id', 'upvotes', 'reply_count' => 'replies', 'time', 'message'],
             'from' => 'upvote_message',
             'where' => [
+                'channel_id' => $channel->id,
                 'parent_id' => $message,
                 'message_id' => ['NOT IN', $loaded],
             ],
@@ -49,6 +52,7 @@ class Upvote extends API {
                 'select' => ['message_id', 'user_id', 'upvotes', 'reply_count' => 'replies', 'time', 'message'],
                 'from' => 'upvote_message',
                 'where' => [
+                    'channel_id' => $channel->id,
                     'parent_id' => $reply['message_id'],
                 ],
                 'order_by' => ['score' => 'DESC'],
